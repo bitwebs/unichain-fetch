@@ -1,13 +1,13 @@
-# hypercore-fetch
+# unichain-fetch
 
-Implementation of Fetch that uses the Hyper SDK for loading p2p content
+Implementation of Fetch that uses the Web4 SDK for loading p2p content
 
-`npm install --save hypercore-fetch`
+`npm install --save @web4/unichain-fetch`
 
 ```javascript
-const fetch = require('hypercore-fetch')()
+const fetch = require('@web4/unichain-fetch')()
 
-const someURL = `hyper://blog.mauve.moe`
+const someURL = `bit://social.x`
 
 const response = await fetch(`${someURL}/index.json`)
 
@@ -19,25 +19,25 @@ console.log(json)
 You can also use the bundled CLI
 
 ```
-npm i -g hypercore-fetch
+npm i -g @web4unichain-fetch
 
-hypercore-fetch hyper://somethingorother
+unichain-fetch bit://somethingorother
 
 # Or
 
-npx hypercore-fetch hyper://somethingorother
+npx unichain-fetch bit://somethingorother
 ```
 
 ## API
 
-### `makeFetch({Hyperdrive, resolveURL, base, session, writable}) => fetch()`
+### `makeFetch({Bitdrive, resolveURL, base, session, writable}) => fetch()`
 
-Creates a hypercore-fetch instance.
+Creates a unichain-fetch instance.
 
-The `base` parameter can be used to specify what the base URL is for relative paths like `fetch('./dat.json')`.
+The `base` parameter can be used to specify what the base URL is for relative paths like `fetch('./bit.json')`.
 
-You can pass in options for the [Dat SDK](https://github.com/datproject/sdk) to have it be auto-created,
-or you can pass in both a function matching  `const archive = Hyperdrive(key)` and a `const resolved = await resolveName(url)` function (where `resolved` is an instance of URL, uses hyper-dns by default).
+You can pass in options for the [Web4 SDK](https://github.com/bitwebs/web4js) to have it be auto-created,
+or you can pass in both a function matching  `const archive = Bitdrive(key)` and a `const resolved = await resolveName(url)` function (where `resolved` is an instance of URL, uses bit-dns by default).
 
 Set `session` to your Electron session if you want to enable setting the `body` of fetch requests to Electron's [UploadData](https://www.electronjs.org/docs/api/structures/upload-data) API in their protocol handlers.
 
@@ -49,7 +49,7 @@ After you've created it, `fetch` will be have like it does in [browsers](https:/
 
 ### `await fetch.close()`
 
-Closes resources for the Dat SDK. This does nothing if you specified the Hyperdrive and `resolveName` options.
+Closes resources for the Web4 SDK. This does nothing if you specified the Bitdrive and `resolveName` options.
 
 ### Common Headers
 
@@ -59,24 +59,24 @@ Each response will also contain the `Allow` header of all the methods currently 
 
 There is also an `ETag` header which will be a JSON string containging the drive's current `version`. This will change only when the drive has gotten an update of some sort and is monotonically incrementing.
 
-### `fetch('hyper://NAME/example.txt', {method: 'GET'})`
+### `fetch('bit://NAME/example.txt', {method: 'GET'})`
 
 This will attempt to load `example.txt` from the archive labeled by `NAME`.
 
 It will also load `index.html` files automatically for a folder.
-You can find the details about how resolution works in the [resolve-dat-path](https://github.com/RangerMauve/resolve-dat-path/blob/master/index.js#L3) module.
+You can find the details about how resolution works in the [resolve-bit-path](https://github.com/bitwebs/resolve-bit-path/blob/master/index.js#L3) module.
 
-`NAME` can either be the 64 character hex key for an archive, a domain to parse with [dat-dns](https://www.npmjs.com/package/dat-dns), or a name for an archive which allows you to write to it.
+`NAME` can either be the 64 character hex key for an archive, a domain to parse with [@web4/bit-dns](https://www.npmjs.com/package/@web4/bit-dns), or a name for an archive which allows you to write to it.
 
 The response headers will contain `X-Blocks` for the number of blocks of data this file represents on disk, and `X-Blocks-Downloaded` which is the number of blocks from this file that have been downloaded locally.
 
-### `fetch('hyper://NAME/.well-known/dat', {method: 'GET'})`
+### `fetch('bit://NAME/.well-known/bit', {method: 'GET'})`
 
-This is used by the dat-dns module for resoving dns domains to `dat://` URLs.
+This is used by the @web4/bit-dns module for resoving dns domains to `bit://` URLs.
 
-This will return some text which will have a `dat://` URL of your archive, followed by a newline and a TTL for the DNS record.
+This will return some text which will have a `bit://` URL of your archive, followed by a newline and a TTL for the DNS record.
 
-### `fetch('hyper://NAME/example/', {method: 'GET'})`
+### `fetch('bit://NAME/example/', {method: 'GET'})`
 
 When doing a `GET` on a directory, you will get a directory listing.
 
@@ -94,18 +94,18 @@ e.g.
 
 Files in the directory will be listed under their name, sub-directories will have a `/` appended to them.
 
-`NAME` can either be the 64 character hex key for an archive, a domain to parse with [dat-dns](https://www.npmjs.com/package/dat-dns), or a name for an archive which allows you to write to it.
+`NAME` can either be the 64 character hex key for an archive, a domain to parse with [@web4/bit-dns](https://www.npmjs.com/package/@web4/bit-dns), or a name for an archive which allows you to write to it.
 
-### `fetch('hyper://NAME/example/?noResolve', {method: 'GET'})`
+### `fetch('bit://NAME/example/?noResolve', {method: 'GET'})`
 
 Adding `?noResolve` to a URL will prevent resolving `index.html` files and will attempt to load the path as is.
 This can be useful for list files in a directory that would normally render as a page.
 
-`NAME` can either be the 64 character hex key for an archive, a domain to parse with [dat-dns](https://www.npmjs.com/package/dat-dns), or a name for an archive which allows you to write to it.
+`NAME` can either be the 64 character hex key for an archive, a domain to parse with [@web4/bit-dns](https://www.npmjs.com/package/@web4/bit-dns), or a name for an archive which allows you to write to it.
 
 The response headers will contain `X-Blocks` for the number of blocks of data this file represents on disk, and `X-Blocks-Downloaded` which is the number of blocks from this file that have been downloaded locally.
 
-### `fetch('hyper://NAME/', {headers: {'Accept': 'text/event-stream'}})`
+### `fetch('bit://NAME/', {headers: {'Accept': 'text/event-stream'}})`
 
 Using the `text/event-stream` content type in the `Accept` header will get back an event stream full of `change` events for every time a file at that path changes.
 
@@ -116,37 +116,37 @@ This stream of data can be used with the `EventSource` in browsers.
 
 Currently there's no way to watch for changes to specific files, so that should be handled at the application level.
 
-You can also watch for the `download` and `upload` events which will be emitted whenever you download or upload blocks from the hyperdrive.
+You can also watch for the `download` and `upload` events which will be emitted whenever you download or upload blocks from the bitdrive.
 
-The `data` for the event will contain a JSON encoded object with the `index` of the block, and the `source` which is the public key of the hypercore (either the metadata of the hyperdrive, or the content feed).
+The `data` for the event will contain a JSON encoded object with the `index` of the block, and the `source` which is the public key of the unichain (either the metadata of the bitdrive, or the content feed).
 
-### `fetch('hyper://NAME/example.txt', {method: 'PUT', body: 'Hello World'})`
+### `fetch('bit://NAME/example.txt', {method: 'PUT', body: 'Hello World'})`
 
 You can add files to archives using a `PUT` method along with a `body`.
 
 The `body` can be either a `String`, an `ArrayBuffer`, a `Blob`, a WHATWG `ReadableStream`, a Node.js `Stream`, or electron's [UploadData](https://www.electronjs.org/docs/api/structures/upload-data) object (make sure to specify the `session` argument in the `makeFetch` function for electron support).
 
-`NAME` can either be the 64 character hex key for an archive, a domain to parse with [dat-dns](https://www.npmjs.com/package/dat-dns), or a name for an archive which allows you to write to it.
+`NAME` can either be the 64 character hex key for an archive, a domain to parse with [@web4/bit-dns](https://www.npmjs.com/package/@web4/bit-dns), or a name for an archive which allows you to write to it.
 
 Your `NAME` will likely be a `name` in most cases to ensure you have a writeable archive.
 
-### `fetch('hyper://NAME/example.txt', {method: 'DELETE'})`
+### `fetch('bit://NAME/example.txt', {method: 'DELETE'})`
 
 You can delete a file in an archive by using the `DELETE` method.
 
 You cannot delete directories if they are not empty.
 
-`NAME` can either be the 64 character hex key for an archive, a domain to parse with [dat-dns](https://www.npmjs.com/package/dat-dns), or a name for an archive which allows you to write to it.
+`NAME` can either be the 64 character hex key for an archive, a domain to parse with [@web4/bit-dns](https://www.npmjs.com/package/@web4/bit-dns), or a name for an archive which allows you to write to it.
 
-### `fetch('hyper://NAME/example.txt', {method: 'GET', headers: {'x-download': 'cache'}})`
+### `fetch('bit://NAME/example.txt', {method: 'GET', headers: {'x-download': 'cache'}})`
 
 You can download a file or an entire folder to the local cache using the `x-download` header set to `cache` in a `GET` request.
 
-`NAME` can either be the 64 character hex key for an archive, a domain to parse with [dat-dns](https://www.npmjs.com/package/dat-dns), or a name for an archive which allows you to write to it.
+`NAME` can either be the 64 character hex key for an archive, a domain to parse with [@web4/bit-dns](https://www.npmjs.com/package/@web4/bit-dns), or a name for an archive which allows you to write to it.
 
 You can use `/` for the path to download the entire contents
 
-### `fetch('hyper://NAME/example.txt', {method: 'DELETE', headers: {'x-clear': 'cache'}})`
+### `fetch('bit://NAME/example.txt', {method: 'DELETE', headers: {'x-clear': 'cache'}})`
 
 You can clear the data stored in the local cache for a file or folder using the `x-clear` header set to `cache` in a `DELETE` request..
 
@@ -154,22 +154,22 @@ This is like the opposite of using `x-download` to download data.
 
 This does not delete data, it only deletes the cached data from disk.
 
-`NAME` can either be the 64 character hex key for an archive, a domain to parse with [dat-dns](https://www.npmjs.com/package/dat-dns), or a name for an archive which allows you to write to it.
+`NAME` can either be the 64 character hex key for an archive, a domain to parse with [@web4/bit-dns](https://www.npmjs.com/package/@web4/bit-dns), or a name for an archive which allows you to write to it.
 
 You can use `/` for the path to clear all data for the archive.
 
-### `fetch('hyper://NAME/$/tags/TAG_NAME', {method: 'PUT'})`
+### `fetch('bit://NAME/$/tags/TAG_NAME', {method: 'PUT'})`
 
 You can add a tag a version of the archive with a human readable name (like SPAGHETTI), in the example represented as `tagName` by doing a PUT into the special `/$/tags/` folder.
 
-Afterwards you can load the archive at that given version with `hyper://NAME+TAG_NAME`.
+Afterwards you can load the archive at that given version with `bit://NAME+TAG_NAME`.
 
 E.g.
 
-`PUT hyper://123kjh213kjh123/$/tags/v4.20`
-`GET hyper://123kjh213kjh123+v4.20/example.txt`
+`PUT bit://123kjh213kjh123/$/tags/v4.20`
+`GET bit://123kjh213kjh123+v4.20/example.txt`
 
-### `fetch('hyper://NAME/$/tags/', {method: 'GET'})`
+### `fetch('bit://NAME/$/tags/', {method: 'GET'})`
 
 You can get a list of all tags by doing a `GET` on the `/$/tags/` folder.
 
@@ -186,19 +186,19 @@ e.g.
 }
 ```
 
-### `fetch('hyper://NAME/$/tags/TAG_NAME', {method: 'DELETE'})`
+### `fetch('bit://NAME/$/tags/TAG_NAME', {method: 'DELETE'})`
 
 You can delete a given tag with the `DELETE` method on a name within the special `$/tags/` folder.
 
 Specify the tag you want in the URL, and it'll be removed from the tags list.
 
-### `fetch('hyper://NAME/$/extensions/')`
+### `fetch('bit://NAME/$/extensions/')`
 
-You can list the current [hypercore extensions](https://github.com/hypercore-protocol/hypercore#ext--feedregisterextensionname-handlers) that are enabled by doing a `GET` on the `/$/extensions/` directory.
+You can list the current [unichain extensions](https://github.com/unichain-protocol/unichain#ext--feedregisterextensionname-handlers) that are enabled by doing a `GET` on the `/$/extensions/` directory.
 
 This will give you a directory listing with the names of all the extensions.
 
-### `fetch('hyper://NAME/$/extensions/EXTENSION_NAME')`
+### `fetch('bit://NAME/$/extensions/EXTENSION_NAME')`
 
 You can list the peers that you are replication with which have registered this extension by doing a `GET` to the directory for the extension.
 
@@ -206,7 +206,7 @@ This is also how you can register an extension that hasn't been registered yet.
 
 The list will be a JSON array with objects that contain the fields `remotePublicKey`, `remoteAddress`, `remoteType`, and `stats`
 
-### `fetch('hyper://NAME/$/extensions/', {headers: {'Accept': 'text/event-stream'}})`
+### `fetch('bit://NAME/$/extensions/', {headers: {'Accept': 'text/event-stream'}})`
 
 Using the `text/event-stream` content type in the `Accept` header will get back an event stream with the extension events.
 
@@ -216,13 +216,13 @@ Only extension messages that have been queried before via a `GET` to the EXTENSI
 
 There are also two special events: `peer-open` which gets emitted whena new peer has connected, and `peer-remove` which gets emitted when an existing peer disconnects.
 
-### `fetch('hyper://NAME/$/extensions/EXTENSION_NAME', {method: 'POST', body: 'Example'})`
+### `fetch('bit://NAME/$/extensions/EXTENSION_NAME', {method: 'POST', body: 'Example'})`
 
 You can broadcast an extension message to all peers that are replicating that extension type with a `POST` to the extension's URL.
 
 The `body` of the request will be used as the payload. Please note that only utf8 encoded text is currently supported due to limitations of the event-stream encoding.
 
-### `fetch('hyper://NAME/$/extensions/EXTENSION_NAME/REMOTE_PUBLIC_KEY', {method: 'POST', body: 'Example'})`
+### `fetch('bit://NAME/$/extensions/EXTENSION_NAME/REMOTE_PUBLIC_KEY', {method: 'POST', body: 'Example'})`
 
 You can send an extension message to a specific peer by doing a `POST` to the extension with their remote public key ID.
 

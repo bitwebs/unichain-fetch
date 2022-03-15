@@ -1,4 +1,4 @@
-const SDK = require('hyper-sdk')
+const SDK = require('@web4/sdk')
 const test = require('tape')
 
 runTests()
@@ -6,21 +6,21 @@ runTests()
 const SAMPLE_CONTENT = 'Hello World'
 
 async function runTests () {
-  const { Hyperdrive, close } = await SDK({
+  const { Bitdrive, close } = await SDK({
     persist: false
   })
 
-  const { Hyperdrive: Hyperdrive2, close: close2 } = await SDK({
+  const { Bitdrive: Bitdrive2, close: close2 } = await SDK({
     persist: false
   })
 
   const fetch = require('./')({
-    Hyperdrive,
+    Bitdrive,
     writable: true
   })
 
   const fetch2 = require('./')({
-    Hyperdrive: Hyperdrive2,
+    Bitdrive: Bitdrive2,
     writable: true
   })
 
@@ -30,14 +30,14 @@ async function runTests () {
   })
 
   test('Read index.html', async (t) => {
-    const archive = Hyperdrive('example1')
+    const archive = Bitdrive('example1')
 
     const FILE_LOCATION = '/index.html'
     const FILE_DATA = '<h1>Hello World!</h1>'
 
     await archive.writeFile(FILE_LOCATION, FILE_DATA)
 
-    const url = `hyper://${archive.key.toString('hex')}${FILE_LOCATION}`
+    const url = `bit://${archive.key.toString('hex')}${FILE_LOCATION}`
 
     t.pass('Prepped archive ' + url)
 
@@ -57,27 +57,27 @@ async function runTests () {
   })
 
   test('GET .well-known/dat', async (t) => {
-    const response = await fetch('hyper://example/.well-known/dat')
+    const response = await fetch('bit://example/.well-known/dat')
     t.ok(response, 'Got response')
     t.equal(response.status, 200, 'Got OK response code')
     const text = await response.text()
     t.ok(text.startsWith('dat://'), 'Returned dat URL')
   })
 
-  test('GET .well-known/hyper', async (t) => {
-    const response = await fetch('hyper://example/.well-known/hyper')
+  test('GET .well-known/bit', async (t) => {
+    const response = await fetch('bit://example/.well-known/bit')
     t.ok(response, 'Got response')
     t.equal(response.status, 200, 'Got OK response code')
     const text = await response.text()
-    t.ok(text.startsWith('hyper://'), 'Returned dat URL')
+    t.ok(text.startsWith('bit://'), 'Returned dat URL')
   })
 
   test('PUT file', async (t) => {
-    const response1 = await fetch('hyper://example/checkthis.txt', { method: 'PUT', body: SAMPLE_CONTENT })
+    const response1 = await fetch('bit://example/checkthis.txt', { method: 'PUT', body: SAMPLE_CONTENT })
 
     t.equal(response1.status, 200, 'Got OK response on write')
 
-    const response2 = await fetch('hyper://example/checkthis.txt')
+    const response2 = await fetch('bit://example/checkthis.txt')
 
     t.equal(response2.status, 200, 'Got OK response on read')
 
@@ -85,90 +85,90 @@ async function runTests () {
   })
 
   test('PUT directory', async (t) => {
-    const response1 = await fetch('hyper://example/foo/bar/', { method: 'PUT' })
+    const response1 = await fetch('bit://example/foo/bar/', { method: 'PUT' })
 
     t.equal(response1.status, 200, 'Got OK response on directory creation')
   })
 
   test('PUT file in new directory', async (t) => {
-    const response1 = await fetch('hyper://example/fizz/buzz/example.txt', { method: 'PUT', body: SAMPLE_CONTENT })
+    const response1 = await fetch('bit://example/fizz/buzz/example.txt', { method: 'PUT', body: SAMPLE_CONTENT })
 
     t.equal(response1.status, 200, 'Got OK response on directory/file creation')
   })
 
   test('PUT to overwrite a file', async (t) => {
-    const response1 = await fetch('hyper://example/baz/index.html', { method: 'PUT', body: SAMPLE_CONTENT })
+    const response1 = await fetch('bit://example/baz/index.html', { method: 'PUT', body: SAMPLE_CONTENT })
     t.ok(response1.ok)
-    const response2 = await fetch('hyper://example/baz/index.html', { method: 'PUT', body: SAMPLE_CONTENT })
+    const response2 = await fetch('bit://example/baz/index.html', { method: 'PUT', body: SAMPLE_CONTENT })
 
     t.equal(response2.status, 200, 'Got OK response on file overwrite')
   })
 
   test('DELETE file', async (t) => {
-    const response1 = await fetch('hyper://example/test.txt', { method: 'PUT', body: SAMPLE_CONTENT })
+    const response1 = await fetch('bit://example/test.txt', { method: 'PUT', body: SAMPLE_CONTENT })
     t.ok(response1.ok)
 
-    const response2 = await fetch('hyper://example/test.txt', { method: 'DELETE' })
+    const response2 = await fetch('bit://example/test.txt', { method: 'DELETE' })
 
     t.equal(response2.status, 200, 'Got OK response on file delete')
 
-    const response3 = await fetch('hyper://example/test.txt', { method: 'GET' })
+    const response3 = await fetch('bit://example/test.txt', { method: 'GET' })
 
     t.equal(response3.status, 404, 'Got not found on deleted file')
   })
 
   test('GET index.html', async (t) => {
-    const response1 = await fetch('hyper://example/baz')
+    const response1 = await fetch('bit://example/baz')
 
     t.equal(await response1.text(), SAMPLE_CONTENT, 'Got index.html content')
 
-    const response2 = await fetch('hyper://example/baz?noResolve')
+    const response2 = await fetch('bit://example/baz?noResolve')
 
     t.equal(response2.headers.get('content-type'), 'application/json; charset=utf-8', 'noResolve flag yields JSON by default')
     t.deepEqual(await response2.json(), ['index.html'], 'Listed directory')
 
-    const response3 = await fetch('hyper://example/baz?noResolve')
+    const response3 = await fetch('bit://example/baz?noResolve')
     t.equal(response3.headers.get('content-type'), 'application/json; charset=utf-8', 'noResolve flag yields JSON by default')
     t.deepEqual(await response3.json(), ['index.html'], 'Listed directory')
   })
 
   test('Create and read tags', async (t) => {
-    await fetch('hyper://example/test.txt', { method: 'PUT', body: SAMPLE_CONTENT })
+    await fetch('bit://example/test.txt', { method: 'PUT', body: SAMPLE_CONTENT })
 
-    const response2 = await fetch('hyper://example/$/tags/tag1', { method: 'PUT' })
+    const response2 = await fetch('bit://example/$/tags/tag1', { method: 'PUT' })
     t.ok(response2.ok, 'Able to create tag')
 
     const version = await response2.json()
 
-    const response3 = await fetch('hyper://example/$/tags/')
+    const response3 = await fetch('bit://example/$/tags/')
 
     t.ok(response3.ok, 'Able to ask for tags')
     t.deepEqual(await response3.json(), { tag1: version }, 'Tag got created')
 
     // Insert a file which won't be available with the old tag
-    await fetch('hyper://example/notaccessible.txt', { method: 'PUT', body: 'test' })
+    await fetch('bit://example/notaccessible.txt', { method: 'PUT', body: 'test' })
 
-    const response4 = await fetch('hyper://example+tag1/notaccessible.txt')
+    const response4 = await fetch('bit://example+tag1/notaccessible.txt')
 
     t.equal(response4.status, 404, 'Newer file not found in older tag')
 
-    const response5 = await fetch('hyper://example/$/tags/tag1', { method: 'DELETE' })
+    const response5 = await fetch('bit://example/$/tags/tag1', { method: 'DELETE' })
 
     t.ok(response5.ok, 'Able to delete tag')
 
-    const response6 = await fetch('hyper://example/$/tags/')
+    const response6 = await fetch('bit://example/$/tags/')
 
     t.deepEqual(await response6.json(), {}, 'No tags left after delete')
   })
 
   test('Load Mauve\'s blog', async (t) => {
-    const response = await fetch('hyper://blog.mauve.moe/')
+    const response = await fetch('bit://blog.mauve.moe/')
 
     t.ok(response.ok, 'Succesfully loaded homepage')
   })
 
   test('Watch for changes', async (t) => {
-    const response = await fetch('hyper://example/', {
+    const response = await fetch('bit://example/', {
       headers: {
         Accept: 'text/event-stream'
       }
@@ -181,7 +181,7 @@ async function runTests () {
 
     const [data] = await Promise.all([
       reader.read(),
-      fetch('hyper://example/example4.txt', { method: 'PUT', body: 'Hello World' })
+      fetch('bit://example/example4.txt', { method: 'PUT', body: 'Hello World' })
     ])
 
     t.ok(data.value, 'Got eventsource data after writing')
@@ -192,7 +192,7 @@ async function runTests () {
   })
 
   test('Send extension from one peer to another', async (t) => {
-    const domainResponse = await fetch('hyper://example/.well-known/hyper')
+    const domainResponse = await fetch('bit://example/.well-known/bit')
     const domain = (await domainResponse.text()).split('\n')[0]
 
     const extensionURL = `${domain}/$/extensions/example`
@@ -209,7 +209,7 @@ async function runTests () {
     const extensionList = await extensionListRequest.json()
 
     // Extension list will always be alphabetically sorted
-    t.deepEqual(extensionList, ['example', 'hypertrie'], 'Got expected list of extensions')
+    t.deepEqual(extensionList, ['example', 'bittrie'], 'Got expected list of extensions')
 
     // Wait a bit for them to connect
     // TODO: Peers API

@@ -1,7 +1,7 @@
-const resolveDatPath = require('resolve-dat-path')
+const resolveBitPath = require('@web4/resolve-bit-path')
 const Headers = require('fetch-headers')
 const mime = require('mime/lite')
-const SDK = require('hyper-sdk')
+const SDK = require('@web4/sdk')
 const parseRange = require('range-parser')
 const makeDir = require('make-dir')
 const { Readable } = require('streamx')
@@ -28,11 +28,11 @@ const PEER_OPEN = 'peer-open'
 const PEER_REMOVE = 'peer-remove'
 
 // TODO: Add caching support
-const { resolveURL: DEFAULT_RESOLVE_URL } = require('hyper-dns')
+const { resolveURL: DEFAULT_RESOLVE_URL } = require('@web4/dns')
 
-module.exports = function makeHyperFetch (opts = {}) {
+module.exports = function makeBitFetch (opts = {}) {
   let {
-    Hyperdrive,
+    Bitdrive,
     resolveURL = DEFAULT_RESOLVE_URL,
     base,
     timeout = DEFAULT_TIMEOUT,
@@ -43,9 +43,9 @@ module.exports = function makeHyperFetch (opts = {}) {
   let gettingSDK = null
   let onClose = async () => undefined
 
-  const isSourceDat = base && base.startsWith('hyper://')
+  const isSourceBit = base && base.startsWith('bit://')
 
-  const fetch = makeFetch(hyperFetch)
+  const fetch = makeFetch(bitFetch)
 
   fetch.close = () => onClose()
 
@@ -84,19 +84,19 @@ module.exports = function makeHyperFetch (opts = {}) {
   }
 
   async function loadArchive (key) {
-    const Hyperdrive = await getHyperdrive()
-    return Hyperdrive(key)
+    const Bitdrive = await getBitdrive()
+    return Bitdrive(key)
   }
 
   return fetch
 
-  async function hyperFetch ({ url, headers: rawHeaders, method, signal, body }) {
-    const isHyperURL = url.startsWith('hyper://')
+  async function bitFetch ({ url, headers: rawHeaders, method, signal, body }) {
+    const isBitURL = url.startsWith('bit://')
     const urlHasProtocol = url.match(PROTOCOL_REGEX)
 
-    const shouldIntercept = isHyperURL || (!urlHasProtocol && isSourceDat)
+    const shouldIntercept = isBitURL || (!urlHasProtocol && isSourceBit)
 
-    if (!shouldIntercept) throw new Error('Invalid protocol, must be hyper://')
+    if (!shouldIntercept) throw new Error('Invalid protocol, must be bit://')
 
     const headers = new Headers(rawHeaders || {})
 
@@ -106,12 +106,12 @@ module.exports = function makeHyperFetch (opts = {}) {
     responseHeaders['Access-Control-Allow-Headers'] = '*'
 
     try {
-      let { pathname: path, key, version, searchParams } = parseDatURL(url)
+      let { pathname: path, key, version, searchParams } = parseBitURL(url)
       if (!path) path = '/'
       if (!path.startsWith('/')) path = '/' + path
 
       try {
-        const resolvedURL = await resolveURL(`hyper://${key}`)
+        const resolvedURL = await resolveURL(`bit://${key}`)
         key = resolvedURL.hostname
       } catch (e) {
         // Probably a domain that couldn't resolve
@@ -154,7 +154,7 @@ module.exports = function makeHyperFetch (opts = {}) {
         await archive.ready()
       }
 
-      const canonical = `hyper://${archive.key.toString('hex')}${path || ''}`
+      const canonical = `bit://${archive.key.toString('hex')}${path || ''}`
       responseHeaders.Link = `<${canonical}>; rel="canonical"`
 
       const isWritable = writable && archive.writable
@@ -390,7 +390,7 @@ module.exports = function makeHyperFetch (opts = {}) {
 
           const source = Readable.from(body)
           const destination = archive.createWriteStream(path)
-          // The sink is needed because Hyperdrive's write stream is duplex
+          // The sink is needed because Bitdrive's write stream is duplex
 
           source.pipe(destination)
 
@@ -507,10 +507,10 @@ module.exports = function makeHyperFetch (opts = {}) {
           await archive.download(path)
         }
 
-        // Legacy DNS spec from Dat protocol: https://github.com/datprotocol/DEPs/blob/master/proposals/0005-dns.md
-        if (finalPath === '/.well-known/dat') {
+        // Legacy DNS spec from Bit protocol: https://github.com/datprotocol/DEPs/blob/master/proposals/0005-dns.md
+        if (finalPath === '/.well-known/bit') {
           const { key } = archive
-          const entry = `dat://${key.toString('hex')}\nttl=3600`
+          const entry = `bit://${key.toString('hex')}\nttl=3600`
           return {
             statusCode: 200,
             headers: responseHeaders,
@@ -518,10 +518,10 @@ module.exports = function makeHyperFetch (opts = {}) {
           }
         }
 
-        // New spec from hyper-dns https://github.com/martinheidegger/hyper-dns
-        if (finalPath === '/.well-known/hyper') {
+        // New spec from bit-dns https://github.com/bitwebs/bit-dns
+        if (finalPath === '/.well-known/bit') {
           const { key } = archive
-          const entry = `hyper://${key.toString('hex')}\nttl=3600`
+          const entry = `bit://${key.toString('hex')}\nttl=3600`
           return {
             statusCode: 200,
             headers: responseHeaders,
@@ -533,7 +533,7 @@ module.exports = function makeHyperFetch (opts = {}) {
             const stats = await archive.stat(path)
             stat = stats[0]
           } else {
-            const resolved = await resolveDatPath(archive, path)
+            const resolved = await resolveBitPath(archive, path)
             finalPath = resolved.path
             stat = resolved.stat
           }
@@ -633,9 +633,9 @@ module.exports = function makeHyperFetch (opts = {}) {
     }
   }
 
-  function getHyperdrive () {
-    if (Hyperdrive) return Hyperdrive
-    return getSDK().then(({ Hyperdrive }) => Hyperdrive)
+  function getBitdrive () {
+    if (Bitdrive) return Bitdrive
+    return getSDK().then(({ Bitdrive }) => Bitdrive)
   }
 
   function getSDK () {
@@ -645,7 +645,7 @@ module.exports = function makeHyperFetch (opts = {}) {
       sdk = gotSDK
       gettingSDK = null
       onClose = async () => sdk.close()
-      Hyperdrive = sdk.Hyperdrive
+      Bitdrive = sdk.Bitdrive
 
       return sdk
     })
@@ -661,7 +661,7 @@ module.exports = function makeHyperFetch (opts = {}) {
   }
 }
 
-function parseDatURL (url) {
+function parseBitURL (url) {
   const parsed = new URL(url)
   let key = parsed.hostname
   let version = null
